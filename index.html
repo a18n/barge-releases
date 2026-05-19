@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Barge — Ambient video for friends</title>
+  <meta name="description" content="Ambient video presence for friends. Pop in and out of video hangs from your menu bar.">
+  <meta property="og:title" content="Barge">
+  <meta property="og:description" content="Ambient video presence for friends. Pop in and out of video hangs from your menu bar.">
+  <meta property="og:type" content="website">
+  <style>
+    :root {
+      --bg: #0a1612;
+      --surface: rgba(255, 255, 255, 0.04);
+      --border: rgba(255, 255, 255, 0.08);
+      --text: #f5f5f4;
+      --muted: #a1a1aa;
+      --accent: #10b981;
+      --accent-bright: #34d399;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; min-height: 100%; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 2rem 1.25rem;
+      text-align: center;
+    }
+    .wrap { max-width: 32rem; }
+    h1 {
+      font-family: "Andale Mono", ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: 3rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin: 0 0 0.5rem;
+    }
+    .tagline {
+      color: var(--muted);
+      font-size: 1.0625rem;
+      line-height: 1.5;
+      margin: 0 0 2.5rem;
+    }
+    .download {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.625rem;
+      padding: 0.875rem 1.75rem;
+      font-size: 1.0625rem;
+      font-weight: 600;
+      color: white;
+      background: linear-gradient(180deg, rgba(16, 185, 129, 0.85) 0%, rgba(5, 150, 105, 0.85) 100%);
+      border: 1px solid rgba(52, 211, 153, 0.4);
+      border-radius: 9999px;
+      text-decoration: none;
+      cursor: pointer;
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.2),
+        0 8px 24px rgba(16, 185, 129, 0.25);
+      transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+    }
+    .download:hover {
+      transform: translateY(-1px);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.25),
+        0 10px 28px rgba(16, 185, 129, 0.35);
+    }
+    .download:active { transform: translateY(0); }
+    .download[aria-disabled="true"] {
+      opacity: 0.55;
+      cursor: progress;
+      pointer-events: none;
+    }
+    .download .icon {
+      width: 1.125rem;
+      height: 1.125rem;
+      fill: currentColor;
+    }
+    .meta {
+      margin-top: 1rem;
+      font-size: 0.8125rem;
+      color: var(--muted);
+      min-height: 1.25rem;
+    }
+    .meta a {
+      color: var(--muted);
+      text-decoration: underline;
+      text-decoration-color: rgba(255, 255, 255, 0.2);
+      text-underline-offset: 2px;
+    }
+    .meta a:hover { color: var(--text); }
+    .reqs {
+      margin-top: 2rem;
+      font-size: 0.8125rem;
+      color: var(--muted);
+    }
+    .error {
+      margin-top: 1rem;
+      font-size: 0.875rem;
+      color: #fca5a5;
+    }
+    .error a { color: #fca5a5; }
+    footer {
+      margin-top: 3rem;
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.3);
+    }
+    footer a {
+      color: inherit;
+      text-decoration: none;
+    }
+    footer a:hover { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>Barge</h1>
+    <p class="tagline">Ambient video presence for friends. Pop in and out of video hangs from your menu bar.</p>
+
+    <a id="dl" class="download" href="https://github.com/a18n/barge-releases/releases/latest" aria-disabled="true" download>
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a1 1 0 0 1 1 1v9.59l3.3-3.3a1 1 0 1 1 1.4 1.42l-5 5a1 1 0 0 1-1.4 0l-5-5a1 1 0 0 1 1.4-1.42L11 13.6V4a1 1 0 0 1 1-1Zm-8 16a1 1 0 0 1 1-1h14a1 1 0 1 1 0 2H5a1 1 0 0 1-1-1Z"/></svg>
+      <span id="dl-label">Loading latest…</span>
+    </a>
+
+    <div class="meta" id="meta"></div>
+    <div class="error" id="error" hidden></div>
+
+    <p class="reqs">Requires macOS on Apple Silicon (M1 or later).</p>
+
+    <footer>
+      <a href="https://github.com/a18n/barge-releases/releases">All releases</a>
+    </footer>
+  </main>
+
+  <script>
+    (function () {
+      var btn = document.getElementById('dl');
+      var label = document.getElementById('dl-label');
+      var meta = document.getElementById('meta');
+      var err = document.getElementById('error');
+
+      function fmtDate(iso) {
+        try {
+          return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+        } catch (e) { return ''; }
+      }
+
+      fetch('https://api.github.com/repos/a18n/barge-releases/releases/latest', {
+        headers: { 'Accept': 'application/vnd.github+json' }
+      })
+        .then(function (r) {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.json();
+        })
+        .then(function (release) {
+          var asset = (release.assets || []).find(function (a) {
+            return /\.dmg$/i.test(a.name) && /arm64/i.test(a.name);
+          });
+          if (!asset) throw new Error('No DMG asset found on latest release');
+
+          btn.href = asset.browser_download_url;
+          btn.removeAttribute('aria-disabled');
+          label.textContent = 'Download for macOS';
+
+          var version = release.tag_name || release.name || '';
+          var date = fmtDate(release.published_at || release.created_at);
+          meta.innerHTML = '<span>' + (version ? version + ' · ' : '') + (date || '') + '</span>' +
+            ' · <a href="' + (release.html_url || 'https://github.com/a18n/barge-releases/releases/latest') + '">release notes</a>';
+        })
+        .catch(function (e) {
+          label.textContent = 'Download from GitHub';
+          btn.removeAttribute('aria-disabled');
+          err.hidden = false;
+          err.innerHTML = "Couldn't auto-fetch the latest version. <a href=\"https://github.com/a18n/barge-releases/releases/latest\">Open the releases page</a>.";
+        });
+    })();
+  </script>
+</body>
+</html>
