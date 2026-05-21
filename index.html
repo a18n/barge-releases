@@ -3,25 +3,27 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Barge — Ambient video for friends</title>
-  <meta name="description" content="Ambient video presence for friends. Pop in and out of video hangs from your menu bar.">
-  <meta property="og:title" content="Barge">
-  <meta property="og:description" content="Ambient video presence for friends. Pop in and out of video hangs from your menu bar.">
+  <title>Plop — Bump into friends from your menu bar</title>
+  <meta name="description" content="Bump into friends. Meet their friends. All from your menu bar.">
+  <meta property="og:title" content="Plop">
+  <meta property="og:description" content="Bump into friends. Meet their friends. All from your menu bar.">
   <meta property="og:type" content="website">
   <style>
     :root {
-      --bg: #0a1612;
-      --surface: rgba(255, 255, 255, 0.04);
-      --border: rgba(255, 255, 255, 0.08);
-      --text: #f5f5f4;
-      --muted: #a1a1aa;
-      --accent: #10b981;
-      --accent-bright: #34d399;
+      --surface: rgba(255, 255, 255, 0.4);
+      --border: rgba(255, 255, 255, 0.5);
+      --text: #2d1a3a;
+      --muted: #7a5870;
+      --accent: #d6326b;
+      --accent-bright: #ec4f8a;
     }
     * { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; min-height: 100%; }
     body {
-      background: var(--bg);
+      /* Diagonal pastel sweep sampled from the app icon: lavender top-
+         left, hot pastel pink middle, peach bottom-right. */
+      background: linear-gradient(135deg, #e0c2ee 0%, #f5a8c2 55%, #fac4a4 100%);
+      background-attachment: fixed;
       color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
       -webkit-font-smoothing: antialiased;
@@ -35,11 +37,15 @@
     }
     .wrap { max-width: 32rem; }
     h1 {
-      font-family: "Andale Mono", ui-monospace, "SF Mono", Menlo, monospace;
-      font-size: 3rem;
-      font-weight: 600;
-      letter-spacing: -0.02em;
       margin: 0 0 0.5rem;
+      line-height: 0;
+    }
+    h1 img {
+      display: block;
+      width: 100%;
+      max-width: 22rem;
+      height: auto;
+      margin: 0 auto;
     }
     .tagline {
       color: var(--muted);
@@ -55,23 +61,26 @@
       font-size: 1.0625rem;
       font-weight: 600;
       color: white;
-      background: linear-gradient(180deg, rgba(16, 185, 129, 0.85) 0%, rgba(5, 150, 105, 0.85) 100%);
-      border: 1px solid rgba(52, 211, 153, 0.4);
+      /* Hot-pink gradient mirroring the wordmark's bottom-stop magenta,
+         which reads as a vibrant call-to-action against the pastel
+         background without competing with the wordmark itself. */
+      background: linear-gradient(180deg, rgba(236, 79, 138, 0.95) 0%, rgba(192, 38, 96, 0.95) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.45);
       border-radius: 9999px;
       text-decoration: none;
       cursor: pointer;
       backdrop-filter: blur(20px) saturate(180%);
       -webkit-backdrop-filter: blur(20px) saturate(180%);
       box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.2),
-        0 8px 24px rgba(16, 185, 129, 0.25);
+        inset 0 1px 0 rgba(255, 255, 255, 0.3),
+        0 8px 24px rgba(214, 50, 107, 0.35);
       transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
     }
     .download:hover {
       transform: translateY(-1px);
       box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.25),
-        0 10px 28px rgba(16, 185, 129, 0.35);
+        inset 0 1px 0 rgba(255, 255, 255, 0.35),
+        0 10px 28px rgba(214, 50, 107, 0.5);
     }
     .download:active { transform: translateY(0); }
     .download[aria-disabled="true"] {
@@ -93,7 +102,7 @@
     .meta a {
       color: var(--muted);
       text-decoration: underline;
-      text-decoration-color: rgba(255, 255, 255, 0.2);
+      text-decoration-color: rgba(45, 26, 58, 0.25);
       text-underline-offset: 2px;
     }
     .meta a:hover { color: var(--text); }
@@ -105,13 +114,13 @@
     .error {
       margin-top: 1rem;
       font-size: 0.875rem;
-      color: #fca5a5;
+      color: #9b2c4a;
     }
-    .error a { color: #fca5a5; }
+    .error a { color: #9b2c4a; }
     footer {
       margin-top: 3rem;
       font-size: 0.75rem;
-      color: rgba(255, 255, 255, 0.3);
+      color: rgba(45, 26, 58, 0.45);
     }
     footer a {
       color: inherit;
@@ -122,8 +131,8 @@
 </head>
 <body>
   <main class="wrap">
-    <h1>Barge</h1>
-    <p class="tagline">Ambient video presence for friends. Pop in and out of video hangs from your menu bar.</p>
+    <h1><img src="plop_wordmark_transparent.png" alt="Plop" /></h1>
+    <p class="tagline">Bump into friends. Meet their friends. All from your menu bar.</p>
 
     <a id="dl" class="download" href="https://github.com/a18n/barge-releases/releases/latest" aria-disabled="true" download>
       <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a1 1 0 0 1 1 1v9.59l3.3-3.3a1 1 0 1 1 1.4 1.42l-5 5a1 1 0 0 1-1.4 0l-5-5a1 1 0 0 1 1.4-1.42L11 13.6V4a1 1 0 0 1 1-1Zm-8 16a1 1 0 0 1 1-1h14a1 1 0 1 1 0 2H5a1 1 0 0 1-1-1Z"/></svg>
@@ -168,7 +177,7 @@
 
           btn.href = asset.browser_download_url;
           btn.removeAttribute('aria-disabled');
-          label.textContent = 'Download for macOS';
+          label.textContent = 'Plop';
 
           var version = release.tag_name || release.name || '';
           var date = fmtDate(release.published_at || release.created_at);
@@ -176,7 +185,7 @@
             ' · <a href="' + (release.html_url || 'https://github.com/a18n/barge-releases/releases/latest') + '">release notes</a>';
         })
         .catch(function (e) {
-          label.textContent = 'Download from GitHub';
+          label.textContent = 'Plop from GitHub';
           btn.removeAttribute('aria-disabled');
           err.hidden = false;
           err.innerHTML = "Couldn't auto-fetch the latest version. <a href=\"https://github.com/a18n/barge-releases/releases/latest\">Open the releases page</a>.";
