@@ -39,6 +39,27 @@
     h1 {
       margin: 0 0 0.5rem;
       line-height: 0;
+      position: relative;
+      isolation: isolate;
+    }
+    /* Magnetic glow — a soft pink/peach halo that tracks the cursor
+       behind the wordmark on hover. */
+    h1::before {
+      content: '';
+      position: absolute;
+      inset: -60px;
+      pointer-events: none;
+      background: radial-gradient(
+        circle 220px at var(--mx, 50%) var(--my, 50%),
+        rgba(255, 120, 190, 0.6) 0%,
+        rgba(255, 180, 130, 0.32) 35%,
+        transparent 70%
+      );
+      filter: blur(26px);
+      opacity: var(--glow-opacity, 0);
+      transition: opacity 320ms ease-out;
+      z-index: -1;
+      border-radius: 50%;
     }
     h1 img {
       display: block;
@@ -46,6 +67,14 @@
       max-width: 22rem;
       height: auto;
       margin: 0 auto;
+      transform: scale(var(--jelly-scale, 1))
+                 skew(var(--jelly-skewx, 0deg), var(--jelly-skewy, 0deg));
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      will-change: transform;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      h1 img { transition: none; transform: none; }
+      h1::before { display: none; }
     }
     .tagline {
       color: var(--muted);
@@ -184,10 +213,56 @@
 
   <script>
     (function () {
+      // Jelly squish + magnetic glow on the wordmark.
+      if (!window.matchMedia || !window.matchMedia('(hover: hover)').matches) return;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+      var h1 = document.querySelector('h1');
+      var wm = h1 && h1.querySelector('img');
+      if (!h1 || !wm) return;
+
+      function reset() {
+        wm.style.setProperty('--jelly-scale', '1');
+        wm.style.setProperty('--jelly-skewx', '0deg');
+        wm.style.setProperty('--jelly-skewy', '0deg');
+        h1.style.setProperty('--glow-opacity', '0');
+      }
+
+      h1.addEventListener('mouseenter', function () {
+        h1.style.setProperty('--glow-opacity', '1');
+      });
+
+      h1.addEventListener('mousemove', function (e) {
+        var r = h1.getBoundingClientRect();
+        var px = (e.clientX - r.left) / r.width;   // 0..1 across wordmark
+        var py = (e.clientY - r.top) / r.height;
+        var ox = Math.max(-1, Math.min(1, (px - 0.5) * 2)); // -1..1
+        var oy = Math.max(-1, Math.min(1, (py - 0.5) * 2));
+
+        // Magnetic glow position (in % of h1's box).
+        h1.style.setProperty('--mx', (px * 100).toFixed(1) + '%');
+        h1.style.setProperty('--my', (py * 100).toFixed(1) + '%');
+
+        // Jelly squish — gentle scale-up + skew toward cursor.
+        wm.style.setProperty('--jelly-scale', '1.05');
+        wm.style.setProperty('--jelly-skewx', (ox * 4).toFixed(2) + 'deg');
+        wm.style.setProperty('--jelly-skewy', (-oy * 3).toFixed(2) + 'deg');
+      });
+
+      h1.addEventListener('mouseleave', reset);
+    })();
+
+    (function () {
       var container = document.getElementById('stars');
       if (!container) return;
       var SVG_NS = 'http://www.w3.org/2000/svg';
-      var count = 22;
+      // Density anchored to ~22 stars at 750×800 (looks balanced there);
+      // scale linearly by viewport area with a min/max clamp.
+      var REF_AREA = 750 * 800;
+      var REF_COUNT = 22;
+      var area = window.innerWidth * window.innerHeight;
+      var count = Math.round(REF_COUNT * (area / REF_AREA));
+      count = Math.max(10, Math.min(90, count));
       // Central exclusion box (in viewport %) so stars don't crowd the card.
       var EX_W = 44, EX_H = 54;
       var exMinX = 50 - EX_W / 2, exMaxX = 50 + EX_W / 2;
@@ -205,8 +280,8 @@
           y > exMinY && y < exMaxY
         );
 
-        var size = 8 + Math.random() * 22;
-        var dur = 5 + Math.random() * 3.2;
+        var size = 10.4 + Math.random() * 28.6;
+        var dur = 2.4 + Math.random() * 3.2;
         var delay = -Math.random() * dur;
 
         var svg = document.createElementNS(SVG_NS, 'svg');
