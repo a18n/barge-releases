@@ -127,9 +127,42 @@
       text-decoration: none;
     }
     footer a:hover { color: var(--muted); }
+
+    #stars {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 0;
+    }
+    .wrap { position: relative; z-index: 1; }
+    .star {
+      position: absolute;
+      color: rgba(255, 255, 255, 0.92);
+      filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.7));
+      transform-origin: center;
+      animation-name: twinkle;
+      animation-timing-function: ease-in-out;
+      animation-iteration-count: infinite;
+      will-change: transform, opacity;
+    }
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.15; transform: scale(0.55); }
+      50%      { opacity: 1;    transform: scale(1); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .star { animation: none; opacity: 0.55; }
+    }
   </style>
 </head>
 <body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="sparkle" viewBox="0 0 100 100">
+      <path d="M50 0 C51 38 52 47 58 49 C66 50.5 80 50.5 100 50 C80 49.5 66 49.5 58 51 C52 53 51 62 50 100 C49 62 48 53 42 51 C34 49.5 20 49.5 0 50 C20 50.5 34 50.5 42 49 C48 47 49 38 50 0 Z" fill="currentColor"/>
+    </symbol>
+  </svg>
+  <div id="stars" aria-hidden="true"></div>
+
   <main class="wrap">
     <h1><img src="plop_wordmark_transparent.png" alt="Plop" /></h1>
     <p class="tagline">Bump into friends. Meet their friends. All from your menu bar.</p>
@@ -150,6 +183,48 @@
   </main>
 
   <script>
+    (function () {
+      var container = document.getElementById('stars');
+      if (!container) return;
+      var SVG_NS = 'http://www.w3.org/2000/svg';
+      var count = 22;
+      // Central exclusion box (in viewport %) so stars don't crowd the card.
+      var EX_W = 44, EX_H = 54;
+      var exMinX = 50 - EX_W / 2, exMaxX = 50 + EX_W / 2;
+      var exMinY = 50 - EX_H / 2, exMaxY = 50 + EX_H / 2;
+
+      for (var i = 0; i < count; i++) {
+        var x, y, tries = 0;
+        do {
+          x = Math.random() * 100;
+          y = Math.random() * 100;
+          tries++;
+        } while (
+          tries < 25 &&
+          x > exMinX && x < exMaxX &&
+          y > exMinY && y < exMaxY
+        );
+
+        var size = 8 + Math.random() * 22;
+        var dur = 5 + Math.random() * 3.2;
+        var delay = -Math.random() * dur;
+
+        var svg = document.createElementNS(SVG_NS, 'svg');
+        svg.setAttribute('class', 'star');
+        svg.setAttribute('viewBox', '0 0 100 100');
+        svg.style.left = x + '%';
+        svg.style.top = y + '%';
+        svg.style.width = size + 'px';
+        svg.style.height = size + 'px';
+        svg.style.animationDuration = dur.toFixed(2) + 's';
+        svg.style.animationDelay = delay.toFixed(2) + 's';
+        var use = document.createElementNS(SVG_NS, 'use');
+        use.setAttribute('href', '#sparkle');
+        svg.appendChild(use);
+        container.appendChild(svg);
+      }
+    })();
+
     (function () {
       var btn = document.getElementById('dl');
       var label = document.getElementById('dl-label');
