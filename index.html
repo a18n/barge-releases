@@ -201,6 +201,140 @@
     @media (prefers-reduced-motion: reduce) {
       .star { animation: none; opacity: 0.55; }
     }
+
+    /* ───── Invite-link personalization (Phase 36) ─────────────────
+       Three additional sections are revealed when the URL carries a
+       valid `?ref=<code>` param: a personalization header above the
+       wordmark, a code-copy card below the download button, and (on
+       mobile) a note nudging the visitor to switch to their Mac.
+       All three are hidden by default and unhidden by the
+       personalization IIFE only on a successful inviter lookup. */
+    .personalization {
+      margin: 0 auto 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .personalization .avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid rgba(255, 255, 255, 0.65);
+      box-shadow:
+        0 0 0 1px rgba(214, 50, 107, 0.18),
+        0 8px 24px rgba(45, 26, 58, 0.18);
+      background: rgba(255, 255, 255, 0.4);
+    }
+    .personalization .headline {
+      margin: 0;
+      font-size: 1.125rem;
+      line-height: 1.4;
+      color: var(--text);
+    }
+    .personalization .headline .name {
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .code-card {
+      margin: 1.75rem auto 0;
+      max-width: 22rem;
+      padding: 1.25rem 1.5rem 1.125rem;
+      border-radius: 1.25rem;
+      background: rgba(255, 255, 255, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.65);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.5),
+        0 12px 32px rgba(45, 26, 58, 0.12);
+      text-align: center;
+    }
+    .code-card .helper {
+      margin: 0 0 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .code-card .helper .name {
+      font-weight: 600;
+      color: var(--text);
+    }
+    .code-card .code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo,
+                   Consolas, monospace;
+      font-size: 1.875rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      color: var(--accent);
+      margin: 0 0 0.75rem;
+      user-select: all;
+      cursor: pointer;
+      /* Subtle hover hint that the code is interactive — clicking the
+         code text copies it just like clicking the button does. */
+      transition: color 120ms ease, transform 120ms ease;
+    }
+    .code-card .code:hover {
+      color: var(--accent-bright);
+      transform: scale(1.02);
+    }
+    .code-card .copy-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.5rem 1.125rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--accent);
+      background: rgba(255, 255, 255, 0.55);
+      border: 1px solid rgba(214, 50, 107, 0.35);
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: background 120ms ease, color 120ms ease, transform 120ms ease;
+    }
+    .code-card .copy-btn:hover {
+      background: rgba(255, 255, 255, 0.85);
+      transform: translateY(-1px);
+    }
+    .code-card .copy-btn .copy-icon {
+      width: 0.9375rem;
+      height: 0.9375rem;
+      fill: currentColor;
+    }
+    /* "Copied!" state — button content swap is handled by the IIFE,
+       but the color shift to the brighter accent comes from this
+       class so it transitions smoothly. */
+    .code-card.copied .copy-btn {
+      color: white;
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .mobile-note {
+      margin: 0 auto 1.25rem;
+      max-width: 22rem;
+      padding: 0.75rem 1rem;
+      font-size: 0.875rem;
+      line-height: 1.5;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: 0.875rem;
+      backdrop-filter: blur(12px) saturate(160%);
+      -webkit-backdrop-filter: blur(12px) saturate(160%);
+    }
+    .mobile-note .emoji {
+      margin-right: 0.375rem;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .code-card .code,
+      .code-card .copy-btn { transition: none; }
+      .code-card .code:hover { transform: none; }
+      .code-card .copy-btn:hover { transform: none; }
+    }
   </style>
 </head>
 <body>
@@ -212,8 +346,28 @@
   <div id="stars" aria-hidden="true"></div>
 
   <main class="wrap">
+    <!-- Personalization header (Phase 36). Hidden by default; the
+         personalization IIFE unhides + populates this when ?ref=<code>
+         resolves to a real inviter. -->
+    <section id="personalization" class="personalization" hidden>
+      <img id="inviter-avatar" class="avatar" alt="" />
+      <p class="headline">
+        <span id="inviter-name" class="name"></span>
+        wants to plop with you
+      </p>
+    </section>
+
     <h1><img src="plop_wordmark_transparent.png" alt="Plop" /></h1>
     <p class="tagline">Bump into friends. Meet their friends. All from your menu bar.</p>
+
+    <!-- Mobile-visitor framing (Phase 36). Only revealed on mobile UA
+         AND a successful inviter lookup — the personalized page is the
+         only context where this nudge is meaningful (no-ref mobile
+         visitors fall through to the existing reqs line). -->
+    <p id="mobile-note" class="mobile-note" hidden>
+      <span class="emoji" aria-hidden="true">📱</span>
+      Open this link on your <strong>Mac</strong> to install Plop. Try AirDropping it from your phone, or texting it to yourself.
+    </p>
 
     <a id="dl" class="download" href="https://github.com/a18n/barge-releases/releases/latest" aria-disabled="true" download>
       <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a1 1 0 0 1 1 1v9.59l3.3-3.3a1 1 0 1 1 1.4 1.42l-5 5a1 1 0 0 1-1.4 0l-5-5a1 1 0 0 1 1.4-1.42L11 13.6V4a1 1 0 0 1 1-1Zm-8 16a1 1 0 0 1 1-1h14a1 1 0 1 1 0 2H5a1 1 0 0 1-1-1Z"/></svg>
@@ -222,6 +376,24 @@
 
     <div class="meta" id="meta"></div>
     <div class="error" id="error" hidden></div>
+
+    <!-- Code-copy card (Phase 36). Revealed alongside the
+         personalization header — its content (the code itself + the
+         "use this during setup to friend {name}" helper) only makes
+         sense once we know who the inviter is. -->
+    <section id="code-card" class="code-card" hidden>
+      <p class="helper">
+        Use this code during Plop setup to auto-friend
+        <span id="code-helper-name" class="name"></span>.
+      </p>
+      <p id="invite-code" class="code" title="Click to copy"></p>
+      <button type="button" id="copy-code" class="copy-btn" aria-label="Copy invite code">
+        <svg class="copy-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1Zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Zm0 16H8V7h11v14Z" />
+        </svg>
+        <span id="copy-label">Copy code</span>
+      </button>
+    </section>
 
     <p class="reqs">Requires macOS on Apple Silicon (M1 or later).</p>
 
@@ -364,6 +536,95 @@
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(reseed, 200);
       });
+    })();
+
+    // ─── Invite-link personalization (Phase 36) ───────────────
+    // Reads `?ref=<code>` from the URL; if present, fetches the
+    // inviter snapshot from the Plop server and reveals the
+    // personalization header + code-copy card + (on mobile) the
+    // "open on your Mac" framing. Silent fallback to the unmodified
+    // page on any non-200 or network error — the un-revealed
+    // elements have `hidden`, so the no-ref code path is exactly
+    // today's page. See INVITE_CODES.md for the full contract.
+    (function () {
+      var params = new URLSearchParams(window.location.search);
+      var ref = params.get('ref');
+      if (!ref) return;
+
+      // Scrub the URL value before fetching: uppercase + strip
+      // whitespace and dashes (common copy/paste residue from
+      // pasting a code into iMessage etc.). The 31-char alphabet
+      // excludes 0/1/I/L/O but we don't reject those here —
+      // any out-of-alphabet character just produces a 404 on the
+      // server, which falls through to the silent fallback.
+      var code = ref.toUpperCase().replace(/[\s-]/g, '');
+      if (code.length === 0) return;
+
+      var SERVER = 'https://bargeserver-production.up.railway.app';
+
+      fetch(SERVER + '/api/invite/' + encodeURIComponent(code))
+        .then(function (r) {
+          if (!r.ok) throw new Error('lookup-' + r.status);
+          return r.json();
+        })
+        .then(function (snapshot) {
+          var displayName = snapshot.displayName;
+          var avatarUrl = snapshot.avatarUrl;
+
+          // Personalization header above the wordmark.
+          var avatarEl = document.getElementById('inviter-avatar');
+          avatarEl.src = avatarUrl;
+          avatarEl.alt = displayName + "'s photo";
+          document.getElementById('inviter-name').textContent = displayName;
+          document.getElementById('personalization').hidden = false;
+
+          // Code-copy card below the download button.
+          document.getElementById('code-helper-name').textContent = displayName;
+          document.getElementById('invite-code').textContent = code;
+          document.getElementById('code-card').hidden = false;
+
+          // Mobile-visitor framing — only meaningful when personalized.
+          // Tests for the common iOS / Android UA tokens; not exhaustive,
+          // but catches the dominant cases without making the regex
+          // brittle. Desktop visitors (Mac, Windows, Linux) fall through.
+          if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
+            document.getElementById('mobile-note').hidden = false;
+          }
+
+          // Wire copy interactions — both the code text itself
+          // (large click target, also tappable on mobile) and the
+          // dedicated button fire the same handler.
+          var codeEl = document.getElementById('invite-code');
+          var cardEl = document.getElementById('code-card');
+          var copyLabel = document.getElementById('copy-label');
+          var copyBtn = document.getElementById('copy-code');
+          var resetTimer = null;
+          function doCopy() {
+            if (!navigator.clipboard) return;
+            navigator.clipboard.writeText(code).then(function () {
+              cardEl.classList.add('copied');
+              copyLabel.textContent = 'Copied!';
+              if (resetTimer) clearTimeout(resetTimer);
+              resetTimer = setTimeout(function () {
+                cardEl.classList.remove('copied');
+                copyLabel.textContent = 'Copy code';
+              }, 1500);
+            }).catch(function () {
+              // navigator.clipboard.writeText can reject if the
+              // document isn't focused or the browser blocks the
+              // permission. Silent — user can still long-press/
+              // select the code text manually.
+            });
+          }
+          copyBtn.addEventListener('click', doCopy);
+          codeEl.addEventListener('click', doCopy);
+        })
+        .catch(function () {
+          // Silent fallback. The personalization elements stay
+          // hidden, so the page renders identically to a no-ref
+          // visit. No error UI — visitors with a stale or invalid
+          // ref still see a working download page.
+        });
     })();
 
     (function () {
