@@ -203,12 +203,23 @@
     }
 
     /* ───── Invite-link personalization (Phase 36) ─────────────────
-       Three additional sections are revealed when the URL carries a
-       valid `?ref=<code>` param: a personalization header above the
-       wordmark, a code-copy card below the download button, and (on
-       mobile) a note nudging the visitor to switch to their Mac.
-       All three are hidden by default and unhidden by the
-       personalization IIFE only on a successful inviter lookup. */
+       Three additional sections show conditionally: a personalization
+       header above the wordmark and a code-copy card below the
+       download button (both revealed only on a successful inviter
+       lookup), plus a "open on your Mac" note that appears for any
+       mobile visitor regardless of `?ref`. All three are hidden by
+       default and unhidden by the IIFEs below.
+
+       This `[hidden]` rule is necessary because our `.personalization`
+       and `.code-card` rules set `display: flex` / `display: block`,
+       which would otherwise override the user-agent's
+       `[hidden] { display: none }` (same specificity, our rule wins
+       by cascade order). The targeted form bumps specificity above
+       our class rules without resorting to !important. */
+    .personalization[hidden],
+    .code-card[hidden],
+    .mobile-note[hidden] { display: none; }
+
     .personalization {
       margin: 0 auto 1.5rem;
       display: flex;
@@ -538,6 +549,20 @@
       });
     })();
 
+    // ─── Mobile-visitor framing (Phase 36) ────────────────────
+    // Every mobile visitor — personalized or not — gets the
+    // "open on your Mac" nudge above the download button. The
+    // page only installs on Mac, so the framing is helpful in
+    // either context. Tests for the common iOS / Android UA
+    // tokens; not exhaustive, but catches the dominant cases
+    // without making the regex brittle. Desktop visitors (Mac,
+    // Windows, Linux) fall through.
+    (function () {
+      if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
+        document.getElementById('mobile-note').hidden = false;
+      }
+    })();
+
     // ─── Invite-link personalization (Phase 36) ───────────────
     // Reads `?ref=<code>` from the URL; if present, fetches the
     // inviter snapshot from the Plop server and reveals the
@@ -582,14 +607,6 @@
           document.getElementById('code-helper-name').textContent = displayName;
           document.getElementById('invite-code').textContent = code;
           document.getElementById('code-card').hidden = false;
-
-          // Mobile-visitor framing — only meaningful when personalized.
-          // Tests for the common iOS / Android UA tokens; not exhaustive,
-          // but catches the dominant cases without making the regex
-          // brittle. Desktop visitors (Mac, Windows, Linux) fall through.
-          if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
-            document.getElementById('mobile-note').hidden = false;
-          }
 
           // Wire copy interactions — both the code text itself
           // (large click target, also tappable on mobile) and the
